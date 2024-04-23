@@ -12,7 +12,7 @@ def calculateColorI(x,y,px):
     )/9
 
 filename = 'Kanye_West_-_Gotcha.mp4'
-
+#
 vc = cv2.VideoCapture(filename)
 c = 1
 # wymiary obrazu
