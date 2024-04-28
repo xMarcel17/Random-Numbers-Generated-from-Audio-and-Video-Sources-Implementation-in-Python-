@@ -10,10 +10,18 @@ def calculateColor(px):
     return ret
 
 def calculateColorI(x,y,px):
+    if(x == 0): # dodalem to zeby nie bylo bledow ze zczytuje kolor z poza obrazka
+        x += 1  # narazie zostawiam, zobaczymy czy dziala
+    if(x == 639): # dziala
+        x -= 1
+    if(y == 0):
+        y += 1
+    if(y == 355):
+        y -= 1
     return (
-        calculateColor(px[x-1][y-1])+calculateColor(px[x-1][y])+calculateColor(px[x-1][y+1])+
-        calculateColor(px[x][y-1])+calculateColor(px[x][y])+calculateColor(px[x][y+1])+
-        calculateColor(px[x+1][y-1])+calculateColor(px[x+1][y])+calculateColor(px[x+1][y+1])
+        calculateColor(px[y-1][x-1])+calculateColor(px[y][x-1])+calculateColor(px[y+1][x-1])+
+        calculateColor(px[y-1][x])+calculateColor(px[y][x])+calculateColor(px[y+1][x])+
+        calculateColor(px[y-1][x+1])+calculateColor(px[y][x+1])+calculateColor(px[y+1][x+1])
     )/9
 
 randomBits = []
@@ -51,11 +59,12 @@ x = int(W/2)
 y = int(H/2)
 
 while c<=90:
+    #print(c)
     img = cv2.imread("frames/"+str(c)+".jpg")
     if(state == 0):
-        print("Stan 0")
+        #print("Stan 0")
         # a----------------------------------------------------------------
-        px = img[x][y]
+        px = img[y][x]
 
         R = px[2]
         G = px[1]
@@ -68,7 +77,7 @@ while c<=90:
         watchdog = 0
         state = 1
     elif(state == 1):
-        print("Stan 1")
+        #print("Stan 1")
         # d----------------------------------------------------------------
         while (watchdog <= th):
             diff = (R-R1)**2 + (G-G1)**2 + (B-B1)**2
@@ -76,7 +85,7 @@ while c<=90:
             if(diff < vt):
                 x = (x + (R ^ G) + 1) % W
                 y = (y + (G ^ B) + 1) % H
-                px = vc[x][y]
+                px = img[y][x]
                 watchdog+=1
                 continue
             state = 2
@@ -84,7 +93,7 @@ while c<=90:
         if(watchdog > th):
             state = 0
     elif(state == 2):
-        print("Stan 2")
+        #print("Stan 2")
         # c----------------------------------------------------------------
 
         n1 = (10 + (R*i + (G << 2) + B + runcnt)%(K/2))
@@ -100,9 +109,8 @@ while c<=90:
         SN5 = audio_content[int(n5)]
         state = 3
     elif(state == 3):
-        print("Stan 3")
+        #print("Stan 3")
         # e----------------------------------------------------------------
-        
         ranBit = (1 & (R^G^B^R1^G1^B1^R2^G2^B2^SN1^SN2^SN3^SN4^SN5))
         randomBits.append(ranBit)
         ranBitCnt+=1
@@ -113,6 +121,7 @@ while c<=90:
 
         x = (((R^x) << 4)^(G^y))%W
         y = (((G^x) << 4)^(B^y))%H
+        state = 2
         if(i==8):
             # g----------------------------------------------------------------
             R2 = R
@@ -120,12 +129,8 @@ while c<=90:
             B2 = B
             i = 0
             c += 1
-            print("wkraczamy")
-            state = 0
-            break
-        state = 2
-    else:
-        print("\n")
+            #print("wkraczamy")
+            state = 0 
 # f----------------------------------------------------------------
 
 # while rval:
@@ -138,4 +143,8 @@ while c<=90:
 #     # print(c)
 #     cv2.waitKey(1)
 # vc.release()
+l = 0
+for i in randomBits:
+    print("Bit numer "+str(l)+" = "+str(i))
+    l += 1
 audio.close()
