@@ -1,1 +1,3 @@
-Random Numbers Generated from Audio and Video Sources
+# Random Numbers Generated from Audio and Video Sources
+TODO:
+- sprawdzic funkcjonalnosc algorytmu
