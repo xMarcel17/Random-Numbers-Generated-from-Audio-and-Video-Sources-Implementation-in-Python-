@@ -2,7 +2,12 @@ import cv2
 import numpy as np
 
 def calculateColor(px):
-    return px[2] << 16 + px[1] << 8 + px[0]
+    ret = px[2]
+    ret = ret << 8
+    ret += px[1]
+    ret = ret << 8
+    ret += px[0]
+    return ret
 
 def calculateColorI(x,y,px):
     return (
@@ -11,9 +16,11 @@ def calculateColorI(x,y,px):
         calculateColor(px[x+1][y-1])+calculateColor(px[x+1][y])+calculateColor(px[x+1][y+1])
     )/9
 
-filename = 'Kanye_West_-_Gotcha.mp4'
+randomBits = []
+filename = 'Kanye_West_-_Gotcha'
 #
-vc = cv2.VideoCapture(filename)
+vc = cv2.VideoCapture(filename+'.mp4')
+audio = open(filename+'.wav', 'rb')
 c = 1
 # wymiary obrazu
 W = 640
@@ -34,31 +41,101 @@ else:
     rval = False
 
 # rozmiar 640x356       indeksowanie pikseli od 0
+state = 0
+audio_content = bytearray(audio.read())
+ranBitCnt=0
+i = 0  # i = 0-7
+runcnt = 0
+K = 500
+x = int(W/2)
+y = int(H/2)
 
-# a----------------------------------------------------------------
-img = cv2.imread("frames/"+str(c)+".jpg")
-xc = int(W/2)
-yc = int(H/2)
+while c<=90:
+    img = cv2.imread("frames/"+str(c)+".jpg")
+    if(state == 0):
+        print("Stan 0")
+        # a----------------------------------------------------------------
+        px = img[x][y]
 
-px = img[xc][yc]
+        R = px[2]
+        G = px[1]
+        B = px[0]
 
-color = calculateColorI(xc,yc,px)
+        color = calculateColorI(x,y,img)
+        x = round((color)%(W/2)+(W/4))
+        y = round((color)%(H/2)+(H/4))
+        # b----------------------------------------------------------------
+        watchdog = 0
+        state = 1
+    elif(state == 1):
+        print("Stan 1")
+        # d----------------------------------------------------------------
+        while (watchdog <= th):
+            diff = (R-R1)**2 + (G-G1)**2 + (B-B1)**2
 
-x = (color)%(W/2)+(W/4)
-y = (color)%(H/2)+(H/4)
+            if(diff < vt):
+                x = (x + (R ^ G) + 1) % W
+                y = (y + (G ^ B) + 1) % H
+                px = vc[x][y]
+                watchdog+=1
+                continue
+            state = 2
+            break  
+        if(watchdog > th):
+            state = 0
+    elif(state == 2):
+        print("Stan 2")
+        # c----------------------------------------------------------------
 
-# b----------------------------------------------------------------
-watchdog = 0
+        n1 = (10 + (R*i + (G << 2) + B + runcnt)%(K/2))
+        n2 = (15 + (R*i + (G << 3) + B + runcnt)%(K/2))
+        n3 = (20 + (R*i + (G << 4) + B + runcnt)%(K/2))
+        n4 = (5 + (R*i + (G << 1) + B + runcnt)%(K/2))
+        n5 = (25 + (R*i + (G << 5) + B + runcnt)%(K/2))
 
-# c----------------------------------------------------------------
+        SN1 = audio_content[int(n1)] 
+        SN2 = audio_content[int(n2)]
+        SN3 = audio_content[int(n3)]
+        SN4 = audio_content[int(n4)]
+        SN5 = audio_content[int(n5)]
+        state = 3
+    elif(state == 3):
+        print("Stan 3")
+        # e----------------------------------------------------------------
+        
+        ranBit = (1 & (R^G^B^R1^G1^B1^R2^G2^B2^SN1^SN2^SN3^SN4^SN5))
+        randomBits.append(ranBit)
+        ranBitCnt+=1
+        i+=1
+        R1 = R
+        G1 = G
+        B1 = B
 
-while rval:
-    rval, frame = vc.read()     # wcztanie klatki z wideo (wizji)
-    # obliczenie initial value 
+        x = (((R^x) << 4)^(G^y))%W
+        y = (((G^x) << 4)^(B^y))%H
+        if(i==8):
+            # g----------------------------------------------------------------
+            R2 = R
+            G2 = G
+            B2 = B
+            i = 0
+            c += 1
+            print("wkraczamy")
+            state = 0
+            break
+        state = 2
+    else:
+        print("\n")
+# f----------------------------------------------------------------
+
+# while rval:
+#     rval, frame = vc.read()     # wcztanie klatki z wideo (wizji)
+#     # obliczenie initial value 
 
     
-    # cv2.imwrite('frames/'+str(c) + '.jpg',frame)
-    # c = c + 1
-    # print(c)
-    cv2.waitKey(1)
-vc.release()
+#     # cv2.imwrite('frames/'+str(c) + '.jpg',frame)
+#     # c = c + 1
+#     # print(c)
+#     cv2.waitKey(1)
+# vc.release()
+audio.close()
