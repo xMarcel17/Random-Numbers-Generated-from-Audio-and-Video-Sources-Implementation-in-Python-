@@ -148,7 +148,7 @@ while c<=162:
             state = 0 
 # f----------------------------------------------------------------
 l = 0
-with open("TEMP1.txt", 'w') as temp1:
+with open("KanyeRandom.txt", 'w') as temp1:
     for i, bit in enumerate(randomBits):
         temp1.write(str(bit))
 for i in randomBits:
